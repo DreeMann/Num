@@ -337,56 +337,147 @@
             animation: glow 2s ease-in-out infinite alternate;
         }
 
-        /* Breakdown */
+        /* Breakdown — step cards */
         .breakdown {
-            margin-top: 20px;
+            margin-top: 22px;
             display: grid;
-            gap: 6px;
+            gap: 10px;
         }
 
-        .breakdown-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .step {
             background: rgba(0,0,0,0.3);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 13px;
+            border-radius: 12px;
+            padding: 12px 14px;
             opacity: 0;
-            transform: translateX(-12px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(8px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .breakdown-row.show {
+        .step.show {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateY(0);
         }
 
-        .breakdown-num {
+        .step::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent), var(--success));
+            opacity: 0.6;
+        }
+
+        .step-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .step-num {
             font-family: 'Share Tech Mono', monospace;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--accent2);
-            border-radius: 4px;
-            font-size: 11px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 700;
             color: #fff;
             flex-shrink: 0;
         }
 
-        .breakdown-desc {
-            color: var(--muted);
-            flex: 1;
+        .step-title {
             font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
         }
 
-        .breakdown-val {
+        .step-body {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .chips {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .chip {
+            width: 24px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 5px;
             font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            color: var(--muted);
+            background: #0a0a0c;
+            opacity: 0.4;
+            transition: all 0.3s ease;
+        }
+
+        .chip.used {
+            color: var(--accent);
+            border-color: var(--accent);
+            opacity: 1;
+            box-shadow: 0 0 10px rgba(0,200,240,0.25);
+            transform: translateY(-2px);
+        }
+
+        .step-arrow {
+            color: var(--muted);
             font-size: 18px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .step-result {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--success);
+            min-width: 36px;
+            text-align: center;
+            text-shadow: 0 0 12px rgba(0,229,160,0.4);
+        }
+
+        .step-formula {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 6px;
+            border-left: 2px solid var(--accent);
+        }
+
+        .step-formula .op {
+            color: var(--accent);
+            margin: 0 3px;
+        }
+
+        .step-formula .eq {
+            color: var(--muted);
+            margin: 0 4px;
+        }
+
+        .step-formula .num {
+            color: var(--accent);
+        }
+
+        .step-formula .final {
             color: var(--success);
             font-weight: 700;
         }
@@ -652,30 +743,85 @@
         });
 
         /* Breakdown with stagger */
-        const descriptions = [
-            { n: 1, desc: `5° dígito de la clave (${c[4]})`, val: d1 },
-            { n: 2, desc: `|${c[1]} − ${c[2]}|`, val: d2 },
-            { n: 3, desc: `Unidad de |2×${c[3]} − ${c[1]}| = ${Math.abs(2*c[3]-c[1])}`, val: d3 },
-            { n: 4, desc: `Decena de (${suma45}×${c[1]} + ${suma45}×${c[2]}) = ${producto}`, val: d4 },
-            { n: 5, desc: `Unidad de (${c.join('+')} = ${c.reduce((a,b)=>a+b,0)})`, val: d5 },
+        const sumTotal = c[0]+c[1]+c[2]+c[3]+c[4];
+        const absD3    = Math.abs(2*c[3]-c[1]);
+
+        const steps = [
+            {
+                title: 'Dígito 1',
+                used: [4],
+                formula: `5° dígito <span class="eq">=</span> <span class="final">${c[4]}</span>`,
+                val: d1
+            },
+            {
+                title: 'Dígito 2',
+                used: [1, 2],
+                formula: `| <span class="num">${c[1]}</span> <span class="op">−</span> <span class="num">${c[2]}</span> | <span class="eq">=</span> <span class="final">${d2}</span>`,
+                val: d2
+            },
+            {
+                title: 'Dígito 3',
+                used: [1, 3],
+                formula: `| 2<span class="op">×</span><span class="num">${c[3]}</span> <span class="op">−</span> <span class="num">${c[1]}</span> | <span class="eq">=</span> ${absD3} <span class="eq">→</span> unidad <span class="final">${d3}</span>`,
+                val: d3
+            },
+            {
+                title: 'Dígito 4',
+                used: [1, 2, 3, 4],
+                formula: `(<span class="num">${c[3]}</span><span class="op">+</span><span class="num">${c[4]}</span>) <span class="op">×</span> (<span class="num">${c[1]}</span><span class="op">+</span><span class="num">${c[2]}</span>) <span class="eq">=</span> ${producto} <span class="eq">→</span> decena <span class="final">${d4}</span>`,
+                val: d4
+            },
+            {
+                title: 'Dígito 5',
+                used: [0, 1, 2, 3, 4],
+                formula: `<span class="num">${c[0]}</span><span class="op">+</span><span class="num">${c[1]}</span><span class="op">+</span><span class="num">${c[2]}</span><span class="op">+</span><span class="num">${c[3]}</span><span class="op">+</span><span class="num">${c[4]}</span> <span class="eq">=</span> ${sumTotal} <span class="eq">→</span> unidad <span class="final">${d5}</span>`,
+                val: d5
+            }
         ];
 
         const bdEl = document.getElementById('breakdown');
-        bdEl.innerHTML = descriptions.map(r => `
-            <div class="breakdown-row">
-                <span class="breakdown-num">${r.n}</span>
-                <span class="breakdown-desc">${r.desc}</span>
-                <span class="breakdown-val">${r.val}</span>
+        bdEl.innerHTML = steps.map((s, i) => `
+            <div class="step" data-step="${i}">
+                <div class="step-head">
+                    <span class="step-num">${i+1}</span>
+                    <span class="step-title">${s.title}</span>
+                </div>
+                <div class="step-body">
+                    <div class="chips">
+                        ${c.map((d, idx) =>
+                            `<span class="chip${s.used.includes(idx) ? ' used' : ''}">${d}</span>`
+                        ).join('')}
+                    </div>
+                    <span class="step-arrow">→</span>
+                    <span class="step-result" data-target="${s.val}">0</span>
+                </div>
+                <div class="step-formula">${s.formula}</div>
             </div>
         `).join('');
 
-        const rows = bdEl.querySelectorAll('.breakdown-row');
-        rows.forEach((row, i) => {
-            setTimeout(() => row.classList.add('show'), 400 + i * 100);
+        const stepEls = bdEl.querySelectorAll('.step');
+        stepEls.forEach((el, i) => {
+            setTimeout(() => {
+                el.classList.add('show');
+                animateCounter(el.querySelector('.step-result'), steps[i].val);
+            }, 500 + i * 180);
         });
 
         document.getElementById('copyBtn').textContent = '📋 Copiar Clave';
         document.getElementById('copyBtn').classList.remove('copied');
+    }
+
+    function animateCounter(el, target) {
+        let ticks = 0;
+        const total = 10;
+        const interval = setInterval(() => {
+            el.textContent = Math.floor(Math.random() * 10);
+            ticks++;
+            if (ticks >= total) {
+                clearInterval(interval);
+                el.textContent = target;
+            }
+        }, 45);
     }
 
     function clearError() {
